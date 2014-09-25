@@ -6,7 +6,26 @@
 	<link rel="stylesheet" href="css/options.css">
 </head>
 <body>
-	div.options>
+	<div id="setting">
+		<ul>
+			<li><input type="checkbox" name="copy" id="copy" value="copy"><label for="copy">复制</label></li>
+			<li>
+				<input type="checkbox" name="search" id="search" value="search"><label for="search">搜索</label>
+				<form action="" id="engine">
+					<input type="radio" name="engine" id="sogou" value="sogou">
+					<label for="sogou">搜狗</label>
+					<input type="radio" name="engine" id="baidu" value="baidu">
+					<label for="baidu">百度</label>
+					<input type="radio" name="engine" id="google" value="google">
+					<label for="google">谷歌</label>
+				</form>
+			</li>
+			<li>
+				<input type="checkbox" name="translate" id="translate" value="translate"><label for="translate">查词</label>
+			</li>
+		</ul>
+	</div>
+	<div id="disableAll"><input type="checkbox" name="disableAll" id="disableAll" value="disableAll"><label for="disableAll">停用所有功能</label></div>
 	<script src="js/options.js"></script>
 </body>
 </html>
