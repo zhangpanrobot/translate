@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "划词菜单",
+    "description": "在网页上选定或双击文字就可以复制搜索.比右键菜单更快捷!更有贴心的无格式复制和划词翻译功能!",
+    "version": "1.0.0",
+    "content_scripts": [{
+        "matches": ["http://*/*", "https://*/*"],
+        "css": ["css/main.css"],
+        "js": ["js/main.js"],
+        "run_at": "document_start",
+        "all_frames": true
+    }],
+    "background": {
+        "scripts": ["js/background.js"]
+    },
+    "permissions": ["storage"],
+    "optional_permissions": ["clipboardRead", "clipboardWrite"],
+    "options_page": "options.html"
+}
