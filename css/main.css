@@ -17,6 +17,6 @@ ul{
 	position: fixed;
 	z-index: 500;
 }
-#muti-translate .muti-hide{
+#muti-translate.muti-hide{
 	display: none;
 }

@@ -7,6 +7,24 @@ function stopDefAction(evt) {
     evt.preventDefault();
 }
 
+//插入文档
+var isLink = true,ta;
+chrome.storage.local.get(null, function(obj) {
+    if (obj.disableAll) {
+        return;
+    } else {
+        var docfrag = document.createDocumentFragment();
+        var itemList = "<ul><li id='copy' class='" + (obj.copy ? "" : "muti-hide") + "'>复制</li><li id='search' class='" + (obj.search ? "" : "muti-hide") + "'><a target='_blank' href=''>搜索</a></li><li id='open' class='" + (isLink ? "" : "muti-hide") + "'><a target='_blank' href=''>打开</a></li></ul>";
+        var divWrapper = document.createElement("div");
+        divWrapper.id = "muti-translate";
+        divWrapper.className = "muti-hide";
+        divWrapper.innerHTML = itemList;
+        docfrag.appendChild(divWrapper);
+        document.body.appendChild(docfrag);
+        ta = document.getElementById("muti-translate");
+    }
+});
+
 //var e = evt || window.event;
 
 /*if(e.preventDefault){
@@ -24,23 +42,21 @@ function stopDefAction(evt) {
 var board; //board用来搜索及存到剪切板
 //get selection(ie and chrome)
 if (window.attachEvent) {
-    window.attachEvent("onmouseup", function(e) {
+    document.body.attachEvent("onmouseup", function(e) {
         board = document.selection.createRange().text;
         if ((e || event).srcElement.nodeName === "A") { //注入"打开"
             console.log("haha");
         }
     });
 } else {
-    window.addEventListener("mouseup", function(e) {
-        var ta = document.getElementById("muti-translate");
-
+    document.body.addEventListener("mouseup", function(e) {
         if (document.getSelection().toString()) {
-            isLink = (e.target.nodeName === "A");
-            if (isLink) document.getElementById("open").className = "";
-            board = document.getSelection().toString();
             ta.className = "";
             ta.style.left = e.clientX + "px";
             ta.style.top = e.clientY - "50" + "px";
+            isLink = (e.target.nodeName === "A");
+            if (isLink) document.getElementById("open").className = "";
+            board = document.getSelection().toString();
             // chrome.runtime.sendMessage({
             //     cmd: 'copy',
             //     text: board
@@ -49,25 +65,11 @@ if (window.attachEvent) {
             ta.className = "muti-hide";
         }
     });
+    document.body.addEventListener("mousewheel", function(e) {
+        ta.className = "muti-hide";
+    });
 }
-
-//插入文档
-var isLink = true;
-chrome.storage.local.get(null, function(obj) {
-    if (obj.disableAll) {
-        return;
-    } else {
-        var docfrag = document.createDocumentFragment();
-        var itemList = "<ul><li id='copy' class='" + (obj.copy ? "" : "muti-hide") + "'>复制</li><li id='search' class='" + (obj.search ? "" : "muti-hide") + "'><a target='_blank' href=''>搜索</a></li><li id='open' class='" + (isLink ? "" : "muti-hide") + "'><a target='_blank' href=''>打开</a></li></ul>";
-        var divWrapper = document.createElement("div");
-        divWrapper.id = "muti-translate";
-        divWrapper.className = "muti-hide";
-        divWrapper.innerHTML = itemList;
-        docfrag.appendChild(divWrapper);
-        document.body.appendChild(docfrag);
-    }
-});
-
+//鼠标既不在目标, 又不在translate则隐藏, 或者鼠标滚动
 // StorageArea.get('copy', function(item) {
 
 // });
