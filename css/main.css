@@ -1,7 +1,7 @@
 ul{
 	list-style: none;
 }
-#muti-translate li{
+#sg-muti-translate li{
 	display: inline-block;
 	border: 1px solid #eee;
 	border-right: none;
@@ -11,13 +11,19 @@ ul{
 	height: 1.5em;
 	text-align: center;
 }
-#muti-translate li:nth-child(n-1){
+#sg-muti-translate li:nth-child(n-1){
 	border-right: 1px solid #eee;
 }
-#muti-translate{
+#sg-muti-translate{
 	position: fixed;
 	z-index: 500;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-ms-user-select:none;
 }
-#muti-translate.muti-hide,#muti-translate .muti-hide{
+#sg-muti-translate ul{
+	display: inline-block;
+}
+#sg-muti-translate.sg-muti-hide,#sg-muti-translate .sg-muti-hide{
 	display: none;
 }

@@ -1,56 +1,147 @@
-//阻止"搜索菜单"的弹出菜单
-function $(id) {
-    return document.getElementById(id);
-};
+(function() {
+    //阻止"搜索菜单"的弹出菜单
 
-function stopDefAction(evt) {
-    evt.preventDefault();
-}
-var engine = ["sogou", "baidu", "google"];
-var searchLinkPre = ['http://www.sogou.com/web?query=', 'http://www.baidu.com/s?wd=', 'https://www.google.com.hk/?#newwindow=1&q='];
-//插入文档
-var isLink = false,
-    ta, copy, search, open, translate;
-chrome.storage.local.get(null, function(obj) {
-    if (obj.disableAll) {
-        return;
+    if (!Array.prototype.indexOf) {
+        Array.prototype.indexOf = function(searchElement, fromIndex) {
+            var k;
+            if (this == null) {
+                throw new TypeError('"this" is null or not defined');
+            }
+
+            var O = Object(this);
+            var len = O.length >>> 0;
+            if (len === 0) {
+                return -1;
+            }
+            var n = +fromIndex || 0;
+
+            if (Math.abs(n) === Infinity) {
+                n = 0;
+            }
+            if (n >= len) {
+                return -1;
+            }
+            k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+            while (k < len) {
+                var kValue;
+                if (k in O && O[k] === searchElement) {
+                    return k;
+                }
+                k++;
+            }
+            return -1;
+        };
     }
+
+
+
+    var obj = {}; //总配置
+    var shield = false; //总开关
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    function stopDefAction(evt) {
+        evt.preventDefault();
+    }
+    var engine = ["sogou", "baidu", "google"];
+    var defaultObj = {
+        "copy": true,
+        "search": true,
+        "engine": engine[0],
+        "translate": true,
+        "disableAll": false
+    };
+    var obj; //当前options
+    var engine = ["sogou", "baidu", "google"];
+    var searchLinkPre = ['http://www.sogou.com/web?query=', 'http://www.baidu.com/s?wd=', 'https://www.google.com.hk/?#newwindow=1&q='];
+    //插入文档
+    var isLink = false,
+        ta, copy, search, open, translate;
+
+    chrome.extension.onRequest.addListener(function(msg) {
+        switch (msg.cmd) {
+            case 'options-back':
+                obj = msg.data;
+                if (obj.disableAll) {
+                    shield = true;
+                    removeHandler(document.body, 'mouseup', translateHandler);
+                }
+                break;
+            case 'translate-back':
+                dataResponse(JSON.parse(msg.data));
+            default:
+                return;
+        }
+    });
+    chrome.extension.sendRequest({
+        cmd: 'getOptions'
+    });
+
     var board;
 
     function sendBack(cmd, board) {
-        chrome.runtime.sendMessage({
-            cmd: cmd,
-            text: board
+        chrome.extension.sendRequest({
+            'cmd': cmd,
+            'text': board
         });
     }
     var translateWrapper = document.createElement("div");
     var docfrag = document.createDocumentFragment();
-    var itemList = "<ul><li id='copy' class='" + (obj.copy ? "" : "muti-hide") + "'>复制</li><li id='search' class='" + (obj.search ? "" : "muti-hide") + "'><a target='_blank' href=''>搜索</a></li><li id='open' class='" + (isLink ? "" : "muti-hide") + "'><a target='_blank' href=''>打开</a></li></ul>";
+    var itemList = "<ul><li id='sg-copy'>复制</li><li id='sg-search'><a target='_blank' href=''>搜索</a></li><li id='sg-open'><a target='_blank' href=''>打开</a></li></ul>";
     var divWrapper = document.createElement("div");
-    divWrapper.id = "muti-translate";
-    divWrapper.className = "muti-hide";
+    divWrapper.id = "sg-muti-translate";
+    divWrapper.className = "sg-muti-hide";
     divWrapper.innerHTML = itemList;
     docfrag.appendChild(divWrapper);
     document.body.appendChild(docfrag);
-    ta = document.getElementById("muti-translate");
-    open = document.getElementById("open");
-    search = document.getElementById("search");
+    ta = $("sg-muti-translate");
+    open = $("sg-open");
+    search = $("sg-search");
+    ta.oncontextmenu = function() {
+        return false;
+    }
     //get selection(ie and chrome)
-    if (window.attachEvent) {
-        document.body.attachEvent("onmouseup", function(e) {
-            board = document.selection.createRange().text;
-            if ((e || event).srcElement.nodeName === "A") { //注入"打开"
-                console.log("haha");
-            }
-        });
-    } else {
-        document.body.addEventListener("mouseup", function(e) {
-            if (document.getSelection().toString()) {
-                board = document.getSelection().toString();
+    function dataResponse(data) {
+        translateWrapper.innerHTML = JSON.stringify(data);
+        ta.appendChild(translateWrapper);
+    }
+    var addHandler = function(element, type, handler) {
+        if (element.addEventListener) {
+            element.addEventListener(type, handler, false);
+        } else if (element.attachEvent) {
+            element.attachEvent('on' + type, handler);
+        } else {
+            element['on' + type] = handler;
+        }
+    };
+
+    var removeHandler = function(element, type, handler) {
+        if (element.removeEventListener) {
+            element.removeEventListener(type, handler, false);
+        } else if (element.detachEvent) {
+            element.detachEvent("on" + type, handler);
+        } else {
+            element["on" + type] = null;
+        }
+    };
+
+    addHandler(document.body, 'mouseup', translateHandler);
+
+    function translateHandler(evt) {
+        e = evt || window.event;
+        targetElement = e.target || e.srcElement;
+        if (targetElement.id !== "sg-copy") {
+            board = document.getSelection ? document.getSelection().toString() : document.selection.createRange().text;
+            if (board && board.replace(/\s/g, '').length) {
                 ta.className = "";
-                ta.style.left = e.clientX + "px";
+                if (document.body.clientWidth <= e.clientX + ta.offsetWidth) {
+                    ta.style.right = 0;
+                } else {
+                    ta.style.left = e.clientX + "px";
+                }
                 ta.style.top = e.clientY - "50" + "px";
-                isLink = (e.target.nodeName === "A");
+                isLink = (targetElement.nodeName === "A");
                 if (isLink) {
                     open.className = "";
                     open.children[0].href = e.target.href;
@@ -58,55 +149,37 @@ chrome.storage.local.get(null, function(obj) {
                 if (obj.search) {
                     search.children[0].href = searchLinkPre[engine.indexOf(obj.engine)] + board;
                 }
-                obj.translate ? sendBack('translate', board) : '';
-                ta.addEventListener("click", function(e) {
-                    switch (e.target.id) {
-                        case "copy":
-                            sendBack('copy', board);
-                            break;
-                        default:
-                            return;
-                    }
-                });
-
-                function dataResponse(data) {
-                    translateWrapper.textContent = JSON.stringify(data);
-                    ta.appendChild(translateWrapper);
+                var valilableWord = board.match(/[a-zA-Z]{2,}/g) && board.match(/[a-zA-Z]{2,}/g)[0]; //英文
+                if (valilableWord && obj.translate) {
+                    sendBack('translate', valilableWord);
                 }
-                chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-                    if (request.cmd == 'translate-back') {
-                        dataResponse(JSON.parse(request.data));
-                    }
-                });
             } else {
-                ta.className = "muti-hide";
+                ta.className = "sg-muti-hide";
             }
-        });
-        document.body.addEventListener("wheel", function(e) {
-            ta.className = "muti-hide";
-        });
+        }
     }
-});
 
-//var e = evt || window.event;
+    addHandler(ta, 'mousedown', exeTranslate);
 
-/*if(e.preventDefault){
-        e.preventDefault();
+    function exeTranslate(evt) {
+        e = evt || window.event;
+        targetElement = e.target || e.srcElement;
+        e.srcElement ? (e.cancelBubble = true) : e.stopPropagation();
+        switch (targetElement.id) {
+            case "sg-copy":
+                if (window.clipboardData) {
+                    window.clipboardData.setData('Text', board);
+                } else {
+                    sendBack('copy', board);
+                }
+                break;
+            default:
+                return;
+        }
+        ta.className = 'sg-muti-hide';
     }
-         
-    if (e.stopPropagation){
-        e.stopPropagation();
-    }else{
-        e.returnValue = false; // 解决IE8右键弹出
-        e.cancelBubble = true;
-    }*/
 
-//$("translate").addEventListener('mouseup', stopDefAction, false);
-
-//鼠标既不在目标, 又不在translate则隐藏, 或者鼠标滚动
-// StorageArea.get('copy', function(item) {
-
-// });
-
-
-// document.body.appendChild(docfrag);
+    addHandler(document.body, 'mousewheel', function() {
+        ta.className = 'sg-muti-hide';
+    });
+})();

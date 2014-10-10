@@ -20,10 +20,9 @@ var defaultObj = {
 	"disableAll": false
 };
 var obj = {};
-chrome.storage.local.get(null, function(item) {
-	obj = Object.keys(item).length ? item : defaultObj;
-	defaulChecked(obj);
-});
+obj = localStorage.options? JSON.parse(localStorage.options): defaultObj;
+
+//localStorage
 //渲染
 function defaulChecked(obj) {
 	//清空checked
@@ -32,7 +31,7 @@ function defaulChecked(obj) {
 		item["checked"] = false;
 	});
 	for (var prop in obj) {
-		if (obj.disableAll) {
+		if (JSON.parse(obj.disableAll)) {
 			if (prop !== "engine") {
 				$("#" + prop)["checked"] = false;
 				$("#disableAll")["checked"] = true; 
@@ -53,13 +52,15 @@ function defaulChecked(obj) {
 	}
 };
 
+defaulChecked(obj);
+
 setMuti.addEventListener("click", function(e) {
 	var targetLi = e.target.parentNode;
 	if (targetLi.tagName === 'LI') {
 		var firstChild = targetLi.children[0];
 		obj[firstChild.id] = !obj[firstChild.id];
 	}
-	chrome.storage.local.set(obj);
+	localStorage.setItem('options', JSON.stringify(obj));
 });
 
 $("#disableAll").addEventListener("click", function(e) {
@@ -71,7 +72,7 @@ $("#disableAll").addEventListener("click", function(e) {
 	setMuti.className = setMuti.className ? "" : "mask";
 	//重绘
 	defaulChecked(obj);
-	chrome.storage.local.set(obj);
+	localStorage.setItem('options', JSON.stringify(obj));
 });
 
 $("#engine").addEventListener("click", function(e) {
@@ -82,5 +83,5 @@ $("#engine").addEventListener("click", function(e) {
 	});
 	engineList[Math.ceil(Array.prototype.indexOf.call(this.children, e.target) / 2)]["checked"] = true;
 	obj["engine"] = e.target['id' || 'for'];
-	chrome.storage.local.set(obj);
+	localStorage.setItem('options', JSON.stringify(obj));
 });
